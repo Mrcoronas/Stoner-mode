@@ -1,78 +1,81 @@
-window.onload = function() {
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-    // Resize canvas to full screen
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-    // Game variables
-    let collectibles = [];
-    const collectibleCount = 10;
-    const collectibleRadius = 15;
-    let score = 0;
+const tableColor = "#228B22"; // grön biljardfärg
+const ballRadius = 15;
 
-    // Create random collectibles
-    function createCollectibles() {
-        collectibles = [];
-        for (let i = 0; i < collectibleCount; i++) {
-            collectibles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                collected: false
-            });
+let balls = [];
+let pockets = [];
+
+// Skapa biljardbollar i triangel (klassisk setup)
+function setupBalls() {
+    const startX = canvas.width / 2 + 150;
+    const startY = canvas.height / 2;
+    let rows = 5;
+    let count = 0;
+
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col <= row; col++) {
+            let x = startX - row * ballRadius * 1.8;
+            let y = startY + (col - row / 2) * ballRadius * 2;
+            balls.push({ x: x, y: y, vx: 0, vy: 0, color: "yellow" });
+            count++;
+            if (count >= 15) return;
         }
     }
+}
 
-    // Check if point is inside collectible
-    function isInsideCollectible(x, y, collectible) {
-        const dx = x - collectible.x;
-        const dy = y - collectible.y;
-        return Math.sqrt(dx * dx + dy * dy) < collectibleRadius;
-    }
+// Skapa 6 hål (pockets)
+function setupPockets() {
+    const margin = 40;
+    const pocketRadius = 25;
+    pockets = [
+        { x: margin, y: margin },
+        { x: canvas.width / 2, y: margin },
+        { x: canvas.width - margin, y: margin },
+        { x: margin, y: canvas.height - margin },
+        { x: canvas.width / 2, y: canvas.height - margin },
+        { x: canvas.width - margin, y: canvas.height - margin },
+    ];
+}
 
-    // Handle click events
-    canvas.addEventListener('click', function(event) {
-        const rect = canvas.getBoundingClientRect();
-        const clickX = event.clientX - rect.left;
-        const clickY = event.clientY - rect.top;
+function drawTable() {
+    ctx.fillStyle = tableColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
 
-        collectibles.forEach(collectible => {
-            if (!collectible.collected && isInsideCollectible(clickX, clickY, collectible)) {
-                collectible.collected = true;
-                score++;
-            }
-        });
+function drawPockets() {
+    ctx.fillStyle = "black";
+    pockets.forEach(pocket => {
+        ctx.beginPath();
+        ctx.arc(pocket.x, pocket.y, 25, 0, Math.PI * 2);
+        ctx.fill();
     });
+}
 
-    // Game loop
-    function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+function drawBalls() {
+    balls.forEach(ball => {
+        ctx.fillStyle = ball.color;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2);
+        ctx.fill();
+    });
+}
 
-        // Draw collectibles
-        collectibles.forEach(collectible => {
-            if (!collectible.collected) {
-                ctx.beginPath();
-                ctx.arc(collectible.x, collectible.y, collectibleRadius, 0, Math.PI * 2);
-                ctx.fillStyle = 'yellow';
-                ctx.fill();
-                ctx.closePath();
-            }
-        });
+function draw() {
+    drawTable();
+    drawPockets();
+    drawBalls();
+}
 
-        // Draw score
-        ctx.fillStyle = 'white';
-        ctx.font = '24px Arial';
-        ctx.fillText('Score: ' + score, 20, 40);
+function gameLoop() {
+    draw();
+    requestAnimationFrame(gameLoop);
+}
 
-        requestAnimationFrame(gameLoop);
-    }
-
-    // Init game
-    createCollectibles();
-    gameLoop();
-};
+setupBalls();
+setupPockets();
+gameLoop();
